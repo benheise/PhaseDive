@@ -4,7 +4,7 @@
 
 int main(  )
 {
-    puts( "[*] Ekko Sleep Obfuscation by C5pider" );
+    puts( "[*] PhaseDive fork of Ekko Sleep Obfuscation by C5pider" );
 
     do
         // Start Sleep Obfuscation

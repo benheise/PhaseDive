@@ -8,7 +8,7 @@ CFLAGS  += -s -ffunction-sections -falign-jumps=1 -w
 CFLAGS	+= -falign-labels=1 -fPIC # -Wl,-Tscripts/Linker.ld
 CFLAGS	+= -Wl,-s,--no-seh,--enable-stdcall-fixup -lPsapi
 
-OUTX64	:= Ekko.x64.exe
+OUTX64	:= PhaseDive.x64.exe
 
 all: x64
 
