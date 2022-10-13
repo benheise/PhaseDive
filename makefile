@@ -6,7 +6,7 @@ CFLAGS	:= -Os -fno-asynchronous-unwind-tables
 CFLAGS 	+= -fno-ident -fpack-struct=8 -falign-functions=1
 CFLAGS  += -s -ffunction-sections -falign-jumps=1 -w
 CFLAGS	+= -falign-labels=1 -fPIC # -Wl,-Tscripts/Linker.ld
-CFLAGS	+= -Wl,-s,--no-seh,--enable-stdcall-fixup
+CFLAGS	+= -Wl,-s,--no-seh,--enable-stdcall-fixup -lPsapi
 
 OUTX64	:= Ekko.x64.exe
 

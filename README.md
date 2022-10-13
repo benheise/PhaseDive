@@ -1,19 +1,13 @@
 <h1 align="center">
 <br>
-<img src="ekko_logo.png">
 <br>
-Ekko
+PhaseDive (Ekko fork)
 </h1>
 
 
-A small sleep obfuscation technique that uses `CreateTimerQueueTimer` Win32 API. <br>
-Proof of Concept. Can be done better. <br>
-
-### NOTE
-This implementation has known flawes. <br> 
-So I wouldn't recommend using it without knowing how it works or know how to spot and fix those flaws. <br>
-TLDR: don't copy and past it into your implants.
+This is a PoC for a change to Ekko to use trampoline calls to ZwContinue and a `jmp rax` gadget to call functions from the `CONTEXT` struct. The `ntdll.dll` gadget is static, you need to find your own `call <ntdll.ZwContinue>` to test this<br>
 
 ### Credit
+- Ekko implementation by C5pider (original repository)
 - [Austin Hudson (@SecIdiot)](https://twitter.com/ilove2pwn_) https://suspicious.actor/2022/05/05/mdsec-nighthawk-study.html
 - Originally discovered by [Peter Winter-Smith](peterwintrsmith) and used in MDSec’s Nighthawk
