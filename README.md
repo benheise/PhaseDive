@@ -3,7 +3,7 @@
 <br>
 PhaseDive (Ekko fork)
 </h1>
-
+better explained at https://tishina.in/execution/phase-dive-sleep-obfuscation
 
 This is a PoC for a change to Ekko to use trampoline calls to ZwContinue and a `jmp rax` gadget to call functions from the `CONTEXT` struct. The `ntdll.dll` gadget is static, you need to find your own `call <ntdll.ZwContinue>` to test this<br>
 
