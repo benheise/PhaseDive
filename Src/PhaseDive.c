@@ -53,12 +53,11 @@ VOID EkkoObf( DWORD SleepTime )
 
     PVOID ntdll_callzw = (PVOID)0x00007FFB300FDDD0;
     printf("(ntdll.dll) JMP RAX ->  %p\n", ntdll_jmprax);
-    printf("(ntdll.dll) CALL ZwContinue -> %p\n", ntdll_callzw);
+    printf("(ntdll.dll) CALL ZwContinue -> %p FIND YOUR OWN WITH x64dbg\n", ntdll_callzw);
 
     hEvent      = CreateEventW( 0, 0, 0, 0 );
     hTimerQueue = CreateTimerQueue();
 
-    NtContinue  = GetProcAddress( GetModuleHandleA( "Ntdll" ), "NtContinue" );
     SysFunc032  = GetProcAddress( LoadLibraryA( "Advapi32" ),  "SystemFunction032" );
 
     ImageBase   = GetModuleHandleA( NULL );
